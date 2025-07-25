@@ -40,18 +40,15 @@ export const StudentData = () => {
     const pageHeight = doc.internal.pageSize.getHeight();
 
     const margin = 40;
-    const usableHeight = pageHeight - 100; // leave room for header/footer
     const columnWidth = (pageWidth - margin * 2) / 3;
-    const rowHeight = usableHeight / schoolYears.length;
-    const padding = 10;
+    const rowHeight = 100;
+    const padding = 6;
 
-    // Header
-    doc.setFillColor(30, 144, 255);
-    doc.rect(0, 0, pageWidth, 40, "F");
+    // Header (no background)
     doc.setFont("Helvetica", "bold");
     doc.setFontSize(16);
-    doc.setTextColor(255, 255, 255);
-    doc.text("MNHS Synchronized Progress Record", pageWidth / 2, 26, {
+    doc.setTextColor(40, 40, 40);
+    doc.text("MNHS Synchronized Progress Record", pageWidth / 2, 30, {
       align: "center",
     });
 
@@ -71,91 +68,119 @@ export const StudentData = () => {
       `Municipality: ${studentInfo.municipality || ""}`,
       `Division: ${studentInfo.division || ""}`,
     ];
+
     infoData.forEach((line, i) => {
       const x = margin + (i % 2) * (pageWidth / 2);
-      const y = 50 + Math.floor(i / 2) * 14;
+      const y = 50 + Math.floor(i / 2) * 12;
       doc.text(line, x, y);
     });
 
-    // Start Y after student info
-    let startY = 50 + Math.ceil(infoData.length / 2) * 14 + 10;
+    let startY = 50 + Math.ceil(infoData.length / 2) * 12 + 16;
+    const maxY = pageHeight - 80;
 
-    // For each year, render a large row block
     schoolYears.forEach((year, index) => {
-      const y = startY + index * rowHeight;
+      const y = startY + index * (rowHeight + 10);
+      if (y + rowHeight > maxY) return;
 
       const d = getAssessmentByYear(year);
+
       const sections = [
         {
           title: "Filipino",
-          content: `Pre: Pagbasa ${d.fil_oral_pre_score || "--"} (${
-            d.fil_oral_pre_level || "--"
-          }), Pag-unawa ${d.fil_comp_pre_score || "--"} (${
-            d.fil_comp_pre_level || "--"
-          })
-Post: Pagbasa ${d.fil_oral_post_score || "--"} (${
-            d.fil_oral_post_level || "--"
-          }), Pag-unawa ${d.fil_comp_post_score || "--"} (${
-            d.fil_comp_post_level || "--"
-          })`,
+          content: [
+            `Pre-Test`,
+            `• Pagbasa score: ${d.fil_oral_pre_score || ""} ${
+              d.fil_oral_pre_level || ""
+            }`,
+            `• Pag-unawa score: ${d.fil_comp_pre_score || ""} ${
+              d.fil_comp_pre_level || ""
+            }`,
+            `Post-Test`,
+            `• Pagbasa score: ${d.fil_oral_post_score || ""} ${
+              d.fil_oral_post_level || ""
+            }`,
+            `• Pag-unawa score: ${d.fil_comp_post_score || ""} ${
+              d.fil_comp_post_level || ""
+            }`,
+          ],
         },
         {
           title: "English",
-          content: `Pre: Oral ${d.eng_oral_pre_score || "--"} (${
-            d.eng_oral_pre_level || "--"
-          }), Comp ${d.eng_comp_pre_score || "--"} (${
-            d.eng_comp_pre_level || "--"
-          })
-Post: Oral ${d.eng_oral_post_score || "--"} (${
-            d.eng_oral_post_level || "--"
-          }), Comp ${d.eng_comp_post_score || "--"} (${
-            d.eng_comp_post_level || "--"
-          })`,
+          content: [
+            `Pre-Test`,
+            `• Oral Reading score: ${d.eng_oral_pre_score || ""} ${
+              d.eng_oral_pre_level || ""
+            }`,
+            `• Comprehension score: ${d.eng_comp_pre_score || ""} ${
+              d.eng_comp_pre_level || ""
+            }`,
+            `Post-Test`,
+            `• Oral Reading score: ${d.eng_oral_post_score || ""} ${
+              d.eng_oral_post_level || ""
+            }`,
+            `• Comprehension score: ${d.eng_comp_post_score || ""} ${
+              d.eng_comp_post_level || ""
+            }`,
+          ],
         },
         {
           title: "Numeracy",
-          content: `Pre: ${d.numeracy_pre_score || "--"} (${
-            d.numeracy_pre_level || "--"
-          })
-Post: ${d.numeracy_post_score || "--"} (${d.numeracy_post_level || "--"})
-Intervention: ${d.intervention || "--"}`,
+          content: [
+            `Pre-Test`,
+            `• Score: ${d.numeracy_pre_score || ""} ${
+              d.numeracy_pre_level || ""
+            }`,
+            `Post-Test`,
+            `• Score: ${d.numeracy_post_score || ""} ${
+              d.numeracy_post_level || ""
+            }`,
+            `Intervention: ${d.intervention || "--"}`,
+          ],
         },
       ];
 
-      // Draw year label
-      doc.setFont("Helvetica", "bold");
-      doc.setFontSize(10);
-      doc.setTextColor(0, 0, 0);
-      doc.text(year, margin, y + 14);
+      // Draw year section border
+      doc.setDrawColor(200);
+      doc.rect(margin, y, pageWidth - margin * 2, rowHeight);
 
-      // Draw the 3 columns
+      // Year label
+      doc.setFont("Helvetica", "bold");
+      doc.setFontSize(9);
+      doc.setTextColor(0, 0, 0);
+      doc.text(`School Year: ${year}`, margin + padding, y + 12);
+
+      // Sections
       sections.forEach((sec, i) => {
         const x = margin + i * columnWidth;
-        const colY = y + 25;
+        const yStart = y + 24;
 
-        // Section Title
         doc.setFont("Helvetica", "bold");
-        doc.setFontSize(9);
-        doc.text(sec.title, x + padding, colY);
-
-        // Section Content
-        doc.setFont("Helvetica", "normal");
         doc.setFontSize(8);
+        doc.text(sec.title, x + padding, yStart);
+
+        doc.setFont("Helvetica", "normal");
+        doc.setFontSize(7);
         doc.setTextColor(60, 60, 60);
-        const wrappedText = doc.splitTextToSize(
-          sec.content,
+
+        const lines = doc.splitTextToSize(
+          sec.content.join("\n"),
           columnWidth - padding * 2
         );
-        doc.text(wrappedText, x + padding, colY + 12);
+        doc.text(lines, x + padding, yStart + 10);
       });
     });
 
     // Footer
+    const now = new Date().toLocaleString();
     doc.setFontSize(7);
-    doc.setTextColor(150, 150, 150);
-    doc.text("Generated via MNHS System", margin, pageHeight - 10);
+    doc.setTextColor(100);
+    doc.text(`Generated on ${now}`, margin, pageHeight - 20);
+    doc.text(
+      "Principal's Signature: ______________________",
+      pageWidth - 250,
+      pageHeight - 20
+    );
 
-    // Save the PDF
     doc.save(`${selectedLRN}_Progress_Record.pdf`);
   };
 
